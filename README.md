@@ -1,6 +1,9 @@
+
 # RangeAnxiety
 
 A small native macOS menu-bar app for viewing usage reported by connected AI providers.
+
+<img width="1252" height="781" alt="Screenshot 2026-09-01 at 2 33 44 pm" src="https://github.com/user-attachments/assets/1d38ec37-9b8a-471f-bd57-0c5f0c81bd77" />
 
 > Early public preview. This is an independent, unofficial project. It is not affiliated with, endorsed by, or sponsored by OpenAI or any other provider named in the app.
 
