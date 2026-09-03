@@ -51,9 +51,10 @@ Never include credentials or personal usage exports in bug reports.
 
 Requirements:
 
-- macOS 13 or later
-- Swift 5.9 or later
-- Xcode command-line tools
+- Xcode 16.2 or later, or the matching command-line tools (Swift 6 and a macOS 15.2 SDK or newer)
+- A macOS version supported by those build tools
+
+The built app still supports macOS 13 or later. The newer SDK is needed to compile the Settings-opening API; it does not raise the app's minimum macOS version. CI uses Xcode 16.2 on macOS 14.
 
 ```sh
 ./build.sh
