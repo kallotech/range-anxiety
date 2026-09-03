@@ -23,6 +23,7 @@ mkdir -p "$staged_app/Contents/Resources"
 
 cp "$binary_dir/RangeAnxiety" "$staged_app/Contents/MacOS/RangeAnxiety"
 cp "$project_dir/AppResources/Info.plist" "$staged_app/Contents/Info.plist"
+cp "$project_dir/AppResources/AppIcon.icns" "$staged_app/Contents/Resources/AppIcon.icns"
 
 xattr -cr "$staged_app"
 

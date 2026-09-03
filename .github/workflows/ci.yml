@@ -17,5 +17,9 @@ jobs:
         run: swift --version
       - name: Run tests
         run: swift test
-      - name: Build release binary
-        run: swift build -c release
+      - name: Check Settings window presentation
+        run: |
+          swiftc -parse-as-library Sources/RangeAnxiety/SettingsWindowPresenter.swift Tests/SettingsWindowSmoke/main.swift -o "$RUNNER_TEMP/settings-window-smoke"
+          "$RUNNER_TEMP/settings-window-smoke"
+      - name: Build app bundle with icon
+        run: ./build.sh

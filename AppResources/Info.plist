@@ -10,6 +10,8 @@
     <string>RangeAnxiety</string>
     <key>CFBundleIdentifier</key>
     <string>io.github.kallotech.rangeanxiety</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon.icns</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>
@@ -19,7 +21,7 @@
     <key>CFBundleShortVersionString</key>
     <string>0.6.0</string>
     <key>CFBundleVersion</key>
-    <string>12</string>
+    <string>14</string>
     <key>LSMinimumSystemVersion</key>
     <string>13.0</string>
     <key>LSUIElement</key>

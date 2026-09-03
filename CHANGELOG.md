@@ -6,6 +6,9 @@ Versions before `0.6.0` are documented retrospectively. Exact source snapshots w
 
 ## [Unreleased]
 
+- Added the custom RangeAnxiety application icon, with transparent standard and Retina representations generated from the supplied artwork.
+- Fixed Settings opening behind other applications. Clicking the gear now activates the app and brings its Settings window forward, including when already open or minimized, without making it always-on-top.
+
 ## [0.6.0] - 2026-09-01
 
 - Renamed the user-facing app and build product to RangeAnxiety.

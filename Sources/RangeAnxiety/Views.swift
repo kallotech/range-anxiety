@@ -16,6 +16,7 @@ struct MenuBarLabel: View {
 
 struct UsagePopover: View {
     @ObservedObject var model: UsageModel
+    let settingsPresenter: SettingsWindowPresenter
     @State private var draggedProvider: ProviderID?
     @State private var providerFrames: [ProviderID: CGRect] = [:]
 
@@ -215,12 +216,15 @@ struct UsagePopover: View {
             Button { model.refresh() } label: { Image(systemName: "arrow.clockwise") }
                 .buttonStyle(.borderless).disabled(model.isRefreshing).help("Refresh now")
             if #available(macOS 14.0, *) {
-                SettingsLink { Image(systemName: "gearshape") }
-                    .buttonStyle(.borderless).help("Settings")
+                OpenSettingsButton(presenter: settingsPresenter)
             } else {
-                Button { NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil) } label: {
+                Button {
+                    settingsPresenter.show {
+                        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+                    }
+                } label: {
                     Image(systemName: "gearshape")
-                }.buttonStyle(.borderless).help("Settings")
+                }.buttonStyle(.borderless).help("Settings").accessibilityLabel("Settings")
             }
             Button { NSApplication.shared.terminate(nil) } label: { Image(systemName: "power") }
                 .buttonStyle(.borderless).help("Quit")

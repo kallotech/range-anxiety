@@ -74,6 +74,22 @@ swift test
 
 The standalone parser check in `Tests/ParserSmoke/main.swift` works on Macs with command-line tools only.
 
+The Settings-window checks also work without XCTest:
+
+```sh
+swiftc -parse-as-library Sources/RangeAnxiety/SettingsWindowPresenter.swift Tests/SettingsWindowSmoke/main.swift -o /tmp/rangeanxiety-settings-window-smoke
+/tmp/rangeanxiety-settings-window-smoke
+```
+
+## App icon
+
+The supplied artwork is preserved in `AppResources/AppIcon.svg`. The build script bundles `AppResources/AppIcon.icns`; to regenerate its standard and Retina sizes on macOS:
+
+```sh
+swift scripts/generate-app-icon.swift AppResources/AppIcon.svg build/AppIcon.iconset
+iconutil --convert icns build/AppIcon.iconset --output AppResources/AppIcon.icns
+```
+
 ## Version history
 
 See [CHANGELOG.md](CHANGELOG.md). Public Git history and GitHub Releases begin with `v0.6.0`; earlier prototypes are documented retrospectively because exact source snapshots were not preserved.
