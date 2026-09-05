@@ -1,0 +1,9 @@
+[
+  {
+    "createdAt" : "2026-09-05T00:00:00Z",
+    "id" : "11111111-1111-1111-1111-111111111111",
+    "isActive" : true,
+    "nickname" : "Test Work",
+    "provider" : "codex"
+  }
+]

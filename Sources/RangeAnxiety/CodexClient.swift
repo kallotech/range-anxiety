@@ -122,14 +122,7 @@ final class CodexResponseCollector {
     }
 
     static func parseWindows(from message: [String: Any]) throws -> [QuotaWindow] {
-        guard let result = message["result"] as? [String: Any],
-              let rateLimits = result["rateLimits"] as? [String: Any] else {
-            throw CodexClientError.invalidResponse
-        }
-
-        var windows: [QuotaWindow] = []
-        if let primary = parseWindow(rateLimits["primary"], id: "primary") { windows.append(primary) }
-        if let secondary = parseWindow(rateLimits["secondary"], id: "secondary") { windows.append(secondary) }
+        let windows = CodexManagedAccountReader.parseWindows(message)
         guard !windows.isEmpty else { throw CodexClientError.invalidResponse }
         return windows
     }

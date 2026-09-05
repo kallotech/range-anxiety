@@ -1,0 +1,82 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  signed-release:
+    runs-on: macos-14
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_16.2.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Validate version
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          plist_version="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' AppResources/Info.plist)"
+          test "$version" = "$plist_version"
+          echo "RELEASE_VERSION=$version" >> "$GITHUB_ENV"
+
+      - name: Import Developer ID certificate
+        env:
+          CERTIFICATE_BASE64: ${{ secrets.DEVELOPER_ID_APPLICATION_P12_BASE64 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.DEVELOPER_ID_APPLICATION_P12_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.RELEASE_KEYCHAIN_PASSWORD }}
+        run: |
+          certificate="$RUNNER_TEMP/developer-id.p12"
+          keychain="$RUNNER_TEMP/range-anxiety.keychain-db"
+          echo "$CERTIFICATE_BASE64" | base64 --decode > "$certificate"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$keychain"
+          security set-keychain-settings -lut 21600 "$keychain"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$keychain"
+          security import "$certificate" -P "$CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$keychain"
+          security list-keychains -d user -s "$keychain" login.keychain-db
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" "$keychain"
+          identity="$(security find-identity -v -p codesigning "$keychain" | sed -n 's/.*"\(Developer ID Application:[^"]*\)".*/\1/p' | head -1)"
+          test -n "$identity"
+          echo "RANGE_ANXIETY_SIGNING_IDENTITY=$identity" >> "$GITHUB_ENV"
+
+      - name: Prepare notarisation key
+        env:
+          NOTARY_KEY_BASE64: ${{ secrets.APPLE_API_KEY_P8_BASE64 }}
+        run: |
+          key="$RUNNER_TEMP/notary-key.p8"
+          echo "$NOTARY_KEY_BASE64" | base64 --decode > "$key"
+          chmod 600 "$key"
+          echo "RANGE_ANXIETY_NOTARY_KEY_PATH=$key" >> "$GITHUB_ENV"
+          echo "RANGE_ANXIETY_NOTARY_KEY_ID=${{ secrets.APPLE_API_KEY_ID }}" >> "$GITHUB_ENV"
+          echo "RANGE_ANXIETY_NOTARY_ISSUER_ID=${{ secrets.APPLE_API_ISSUER_ID }}" >> "$GITHUB_ENV"
+
+      - name: Build, sign, notarise, and staple
+        run: scripts/release.sh "$RELEASE_VERSION"
+
+      - name: Generate signed Sparkle feed
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          printf '%s' "$SPARKLE_PRIVATE_KEY" > "$RUNNER_TEMP/sparkle-private-key"
+          chmod 600 "$RUNNER_TEMP/sparkle-private-key"
+          .build/artifacts/sparkle/Sparkle/bin/generate_appcast \
+            --ed-key-file "$RUNNER_TEMP/sparkle-private-key" \
+            --download-url-prefix "https://github.com/kallotech/range-anxiety/releases/download/v$RELEASE_VERSION/" \
+            --link "https://github.com/kallotech/range-anxiety" \
+            dist
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            "dist/RangeAnxiety-$RELEASE_VERSION.dmg" \
+            "dist/RangeAnxiety-$RELEASE_VERSION.dmg.sha256" \
+            "dist/appcast.xml" \
+            --verify-tag \
+            --generate-notes \
+            --title "RangeAnxiety $RELEASE_VERSION"

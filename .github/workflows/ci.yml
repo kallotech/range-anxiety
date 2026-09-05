@@ -24,5 +24,14 @@ jobs:
         run: |
           swiftc -parse-as-library Sources/RangeAnxiety/SettingsWindowPresenter.swift Tests/SettingsWindowSmoke/main.swift -o "$RUNNER_TEMP/settings-window-smoke"
           "$RUNNER_TEMP/settings-window-smoke"
+      - name: Check managed-account rate-limit parsing
+        run: |
+          swiftc Sources/RangeAnxiety/Models.swift Sources/RangeAnxiety/CodexManagedAccounts.swift Tests/ManagedAccountsSmoke/main.swift -framework AppKit -o "$RUNNER_TEMP/managed-account-smoke"
+          "$RUNNER_TEMP/managed-account-smoke"
       - name: Build app bundle with icon
         run: ./build.sh
+      - name: Check packaged launcher
+        run: |
+          RANGE_ANXIETY_ACCOUNTS_PATH="$PWD/Tests/Fixtures/accounts.json" build/RangeAnxiety.app/Contents/Resources/ra list | grep -F $'codex\tactive\tTest Work'
+          codesign --verify --deep --strict build/RangeAnxiety.app
+          plutil -lint build/RangeAnxiety.app/Contents/Info.plist

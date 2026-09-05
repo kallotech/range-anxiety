@@ -6,6 +6,13 @@ Versions before `0.6.0` are documented retrospectively. Exact source snapshots w
 
 ## [Unreleased]
 
+- Added isolated named Codex profiles, provider-owned browser sign-in, per-account quota windows, and manual activation for new `ra codex` sessions.
+- Added the bundled `ra` CLI launcher without shadowing or rewriting the user's normal Codex and Claude profiles.
+- Added Codex and Claude CLI version, installation-source, authentication-health, and update-guidance cards.
+- Added launch-at-login controls using macOS Service Management.
+- Integrated Sparkle 2 with a RangeAnxiety-specific EdDSA public key and a GitHub Release appcast.
+- Added Developer ID, hardened-runtime, notarised DMG, GitHub Release, and Homebrew cask foundations.
+- Added multi-bucket Codex rate-limit parsing so model-scoped limits are not discarded.
 - Added the custom RangeAnxiety application icon, with transparent standard and Retina representations generated from the supplied artwork.
 - Fixed Settings opening behind other applications. Clicking the gear now activates the app and brings its Settings window forward, including when already open or minimized, without making it always-on-top.
 

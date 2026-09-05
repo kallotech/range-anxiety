@@ -4,6 +4,7 @@ import SwiftUI
 struct RangeAnxietyApp: App {
     @StateObject private var model = UsageModel()
     @StateObject private var settingsPresenter = SettingsWindowPresenter()
+    @StateObject private var updater = UpdaterController()
 
     var body: some Scene {
         MenuBarExtra {
@@ -14,7 +15,7 @@ struct RangeAnxietyApp: App {
         .menuBarExtraStyle(.window)
 
         Settings {
-            SettingsView(model: model)
+            SettingsView(model: model, updater: updater)
                 .background(SettingsWindowReader(presenter: settingsPresenter))
         }
     }

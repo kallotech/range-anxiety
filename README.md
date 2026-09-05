@@ -7,7 +7,7 @@ A small native macOS menu-bar app for viewing usage reported by connected AI pro
 
 > Early public preview. This is an independent, unofficial project. It is not affiliated with, endorsed by, or sponsored by OpenAI or any other provider named in the app.
 
-The first public release is source-only. Downloadable binaries will follow after Developer ID signing and Apple notarization are configured.
+The current public preview is source-only. The signed DMG, automatic-update feed, and Homebrew cask are prepared but will not be published until Developer ID signing and Apple notarization credentials are configured.
 
 ## Features
 
@@ -17,6 +17,10 @@ The first public release is source-only. Downloadable binaries will follow after
 - Clear labels for month-to-date, through-yesterday, and recent-rate metrics.
 - Centralized provider and display settings.
 - Support for the macOS Reduce Motion accessibility setting.
+- Isolated, named Codex account profiles with provider-owned browser sign-in.
+- Manual account activation for new sessions through the bundled `ra` launcher.
+- Codex and Claude CLI installation, version, authentication health, and update guidance.
+- Launch-at-login support and signed Sparkle update integration.
 
 ## Provider connectors
 
@@ -37,7 +41,7 @@ Google Gemini, DeepSeek, and Azure OpenAI appear in Settings with their current 
 ## Privacy and credentials
 
 - The app has no analytics or telemetry of its own.
-- Codex uses the existing local Codex-managed login; this app does not request or store Codex login details.
+- The default Codex connector uses the existing local Codex-managed login. Optional managed accounts use isolated profile folders, while Codex owns the browser login, token storage, and token refresh inside each profile.
 - Other provider credentials are sent only to the selected provider's reporting endpoint.
 - Provider credentials are stored encrypted in macOS Keychain and are never included in the app bundle or repository.
 - Existing owner-only credential files from earlier prototypes are migrated into Keychain, verified, and removed automatically.
@@ -62,6 +66,10 @@ open "build/RangeAnxiety.app"
 ```
 
 Local builds use the configured code-signing identity and otherwise fall back to an ad-hoc signature. Gatekeeper may reject a downloaded ad-hoc build from another Mac. Public binary releases should be Developer ID signed, hardened, and notarized.
+
+The built app contains an optional `ra` launcher. Homebrew exposes it automatically; source builds can run it from `build/RangeAnxiety.app/Contents/Resources/ra`. Use `ra list`, `ra codex`, or `ra claude`. Only managed sessions launched through `ra` use the selected isolated account; the user's normal CLI profile is never rewritten.
+
+Release maintainers should follow [docs/RELEASE.md](docs/RELEASE.md).
 
 Maintainers can set `RANGE_ANXIETY_SIGNING_IDENTITY` to a code-signing identity name. A stable signing identity prevents macOS from treating each changed local build as a different app for Keychain access.
 
