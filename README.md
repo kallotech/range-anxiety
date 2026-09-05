@@ -60,14 +60,35 @@ Requirements:
 
 The built app still supports macOS 13 or later. The newer SDK is needed to compile the Settings-opening API; it does not raise the app's minimum macOS version. CI uses Xcode 16.2 on macOS 14.
 
+If the Apple command-line tools are not installed yet:
+
 ```sh
-./build.sh
-open "build/RangeAnxiety.app"
+xcode-select --install
 ```
 
-Local builds use the configured code-signing identity and otherwise fall back to an ad-hoc signature. Gatekeeper may reject a downloaded ad-hoc build from another Mac. Public binary releases should be Developer ID signed, hardened, and notarized.
+Clone, build, and install RangeAnxiety for the current user:
 
-The built app contains an optional `ra` launcher. Homebrew exposes it automatically; source builds can run it from `build/RangeAnxiety.app/Contents/Resources/ra`. Use `ra list`, `ra codex`, or `ra claude`. Only managed sessions launched through `ra` use the selected isolated account; the user's normal CLI profile is never rewritten.
+```sh
+git clone https://github.com/kallotech/range-anxiety.git
+cd range-anxiety
+./build.sh
+mkdir -p "$HOME/Applications"
+ditto "build/RangeAnxiety.app" "$HOME/Applications/RangeAnxiety.app"
+open "$HOME/Applications/RangeAnxiety.app"
+```
+
+RangeAnxiety then appears in the menu bar. Open its Settings to connect providers, add named Codex accounts, or enable launch at login.
+
+Local builds use the configured code-signing identity and otherwise fall back to an ad-hoc signature. If macOS blocks the first launch, open **System Settings → Privacy & Security** and choose **Open Anyway** for RangeAnxiety. Public binary releases should be Developer ID signed, hardened, and notarized.
+
+The built app contains an optional `ra` launcher. Until the Homebrew release is available, source installs can run it directly:
+
+```sh
+"$HOME/Applications/RangeAnxiety.app/Contents/Resources/ra" list
+"$HOME/Applications/RangeAnxiety.app/Contents/Resources/ra" codex
+```
+
+`ra list` shows the managed profiles and `ra codex` starts a new Codex session with the account marked active in RangeAnxiety. The user's normal CLI profile is never rewritten. Claude health checks are available, but managed Claude account switching remains disabled until its macOS Keychain credentials can be isolated safely.
 
 Release maintainers should follow [docs/RELEASE.md](docs/RELEASE.md).
 
