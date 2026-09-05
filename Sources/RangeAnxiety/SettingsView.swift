@@ -6,6 +6,7 @@ struct SettingsView: View {
     @StateObject private var launchAtLogin = LaunchAtLoginController()
     @StateObject private var cliHealth = CLIHealthController()
     @StateObject private var managedAccounts = ManagedAccountsController()
+    @StateObject private var claudeCapture = ClaudeUsageCaptureController()
     @State private var editingProvider: ProviderID?
     @State private var credential = ""
     @State private var auxiliary = ""
@@ -197,7 +198,7 @@ struct SettingsView: View {
                     Text("Every 15 minutes").tag(15)
                     Text("Every 30 minutes").tag(30)
                 }
-                Toggle("Show Codex quota bars in the usage menu", isOn: $model.showCodexQuota)
+                Toggle("Show Codex and Claude quota bars in the usage menu", isOn: $model.showCodexQuota)
                 Toggle("Launch RangeAnxiety at login", isOn: Binding(
                     get: { launchAtLogin.isEnabled },
                     set: { launchAtLogin.setEnabled($0) }
@@ -273,12 +274,44 @@ struct SettingsView: View {
 
             if editingProvider == descriptor.id {
                 connectionEditor(descriptor)
+            } else if descriptor.id == .claudeCode {
+                claudeCaptureActions
             } else if case .supported = descriptor.availability, descriptor.requiresCredential {
                 connectionActions(descriptor)
             }
         }
         .padding(12)
         .background(.quaternary.opacity(0.35), in: RoundedRectangle(cornerRadius: 11))
+    }
+
+    private var claudeCaptureActions: some View {
+        VStack(alignment: .leading, spacing: 7) {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Capture limits from Claude Code")
+                        .font(.caption.weight(.medium))
+                    Text("Opt in once, then send a Claude message. Existing custom status-line output is preserved.")
+                        .font(.caption2).foregroundStyle(.secondary)
+                }
+                Spacer()
+                Toggle("Capture Claude limits", isOn: Binding(
+                    get: { claudeCapture.isEnabled },
+                    set: { enabled in
+                        claudeCapture.setEnabled(enabled)
+                        model.refresh()
+                    }
+                ))
+                .labelsHidden().toggleStyle(.switch).controlSize(.small)
+            }
+            if let message = claudeCapture.statusMessage {
+                Label(message, systemImage: "exclamationmark.triangle")
+                    .font(.caption2).foregroundStyle(.orange)
+            } else if claudeCapture.isEnabled {
+                Text("RangeAnxiety stores only the 5-hour and 7-day percentages, reset times, and capture time in Application Support.")
+                    .font(.caption2).foregroundStyle(.secondary)
+            }
+        }
+        .padding(.leading, 35)
     }
 
     private func statusBadge(_ descriptor: ProviderDescriptor) -> some View {
@@ -288,7 +321,10 @@ struct SettingsView: View {
         case .unavailable:
             title = "Not available"; color = .secondary
         case .supported:
-            if model.isConfigured(descriptor.id) { title = "Connected"; color = .green }
+            if descriptor.id == .claudeCode {
+                title = claudeCapture.isEnabled ? "Capture on" : "Capture off"
+                color = claudeCapture.isEnabled ? .green : .secondary
+            } else if model.isConfigured(descriptor.id) { title = "Connected"; color = .green }
             else { title = "Not connected"; color = .secondary }
         }
         return Text(title.uppercased())

@@ -66,8 +66,8 @@ struct UsagePopover: View {
         var height: CGFloat = 190
         for provider in model.visibleProviderIDs {
             height += 105
-            if provider == .codex, model.showCodexQuota {
-                height += CGFloat(model.windows.count) * 62
+            if provider.isSubscriptionQuotaProvider, model.showCodexQuota {
+                height += CGFloat(model.windows(for: provider).count) * 62
             }
         }
         if model.visibleProviderIDs.count > 1 { height += 28 }
@@ -137,13 +137,14 @@ struct UsagePopover: View {
                     .help("Click and drag to rearrange")
             }
 
-            if provider != .codex {
+            if !provider.isSubscriptionQuotaProvider {
                 providerMetrics(usage)
             }
 
-            if provider == .codex, model.showCodexQuota, !model.windows.isEmpty {
+            let providerWindows = model.windows(for: provider)
+            if provider.isSubscriptionQuotaProvider, model.showCodexQuota, !providerWindows.isEmpty {
                 Divider()
-                ForEach(model.windows) { quotaWindow($0) }
+                ForEach(providerWindows) { quotaWindow($0) }
             }
 
             if case .unavailable(let message) = usage.state {

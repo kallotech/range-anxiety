@@ -14,6 +14,7 @@ The current public preview is source-only. The signed DMG, automatic-update feed
 - Combined **today** totals for providers that expose genuine daily tokens or spend.
 - Separate, draggable cards for every connected provider.
 - Codex quota windows, reset times, and burn-rate-aware progress animations.
+- Claude Code 5-hour and 7-day subscription limits through an opt-in, credential-free status-line capture.
 - Clear labels for month-to-date, through-yesterday, and recent-rate metrics.
 - Centralized provider and display settings.
 - Support for the macOS Reduce Motion accessibility setting.
@@ -27,6 +28,7 @@ The current public preview is source-only. The signed DMG, automatic-update feed
 | Provider | Reported data | Requirement |
 | --- | --- | --- |
 | Codex | Quota windows and reset times | A local Codex or ChatGPT installation and login |
+| Claude Code | 5-hour and 7-day subscription windows | Claude Code 2.1.80+ with limit capture enabled in Settings |
 | OpenRouter | Daily tokens and spend | Management key |
 | OpenAI API | Daily organization tokens and cost | Organization Admin API key |
 | Anthropic | Daily organization tokens and cost | Admin API key |
@@ -42,6 +44,7 @@ Google Gemini, DeepSeek, and Azure OpenAI appear in Settings with their current 
 
 - The app has no analytics or telemetry of its own.
 - The default Codex connector uses the existing local Codex-managed login. Optional managed accounts use isolated profile folders, while Codex owns the browser login, token storage, and token refresh inside each profile.
+- Claude Code limit capture receives the documented `rate_limits` status-line fields and stores only percentages, reset times, and capture time. It does not read Claude OAuth credentials or make Anthropic API calls.
 - Other provider credentials are sent only to the selected provider's reporting endpoint.
 - Provider credentials are stored encrypted in macOS Keychain and are never included in the app bundle or repository.
 - Existing owner-only credential files from earlier prototypes are migrated into Keychain, verified, and removed automatically.
@@ -78,6 +81,8 @@ open "$HOME/Applications/RangeAnxiety.app"
 ```
 
 RangeAnxiety then appears in the menu bar. Open its Settings to connect providers, add named Codex accounts, or enable launch at login.
+
+To show Claude subscription limits, open **Settings → Providers → Claude Code** and enable **Capture limits from Claude Code**. Send at least one message in a signed-in Claude Pro or Max session; Claude supplies the 5-hour and 7-day figures after a response. If you already use a custom Claude status line, RangeAnxiety chains it and preserves its output. Disabling capture restores the previous configuration.
 
 Local builds use the configured code-signing identity and otherwise fall back to an ad-hoc signature. If macOS blocks the first launch, open **System Settings → Privacy & Security** and choose **Open Anyway** for RangeAnxiety. Public binary releases should be Developer ID signed, hardened, and notarized.
 

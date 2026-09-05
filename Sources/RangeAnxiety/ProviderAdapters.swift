@@ -19,6 +19,25 @@ final class CodexProviderAdapter: UsageProviderAdapter {
     }
 }
 
+final class ClaudeCodeProviderAdapter: UsageProviderAdapter {
+    let id = ProviderID.claudeCode
+    private let client = ClaudeUsageCaptureClient()
+
+    func fetch(completion: @escaping (Result<ProviderFetchResult, Error>) -> Void) {
+        client.fetch { result in
+            switch result {
+            case .success(let windows):
+                completion(.success(ProviderFetchResult(
+                    usage: ProviderUsage(id: .claudeCode, tokens: nil, spendUSD: nil,
+                                         period: .today, secondaryMetric: "Captured locally from Claude Code", state: .available),
+                    quotaWindows: windows
+                )))
+            case .failure(let error): completion(.failure(error))
+            }
+        }
+    }
+}
+
 final class OpenRouterProviderAdapter: UsageProviderAdapter {
     let id = ProviderID.openRouter
     private let client = OpenRouterUsageClient()
@@ -47,7 +66,7 @@ final class OpenRouterProviderAdapter: UsageProviderAdapter {
 enum ProviderAdapterFactory {
     static func makeAdapters() -> [ProviderID: any UsageProviderAdapter] {
         let adapters: [any UsageProviderAdapter] = [
-            CodexProviderAdapter(), OpenRouterProviderAdapter(), OpenAIProviderAdapter(),
+            CodexProviderAdapter(), ClaudeCodeProviderAdapter(), OpenRouterProviderAdapter(), OpenAIProviderAdapter(),
             AnthropicProviderAdapter(), XAIProviderAdapter(), MistralProviderAdapter(),
             TogetherProviderAdapter(), FireworksProviderAdapter(), GroqProviderAdapter()
         ]

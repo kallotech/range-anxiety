@@ -28,10 +28,19 @@ jobs:
         run: |
           swiftc Sources/RangeAnxiety/Models.swift Sources/RangeAnxiety/CodexManagedAccounts.swift Tests/ManagedAccountsSmoke/main.swift -framework AppKit -o "$RUNNER_TEMP/managed-account-smoke"
           "$RUNNER_TEMP/managed-account-smoke"
+      - name: Check Claude limit capture parsing
+        run: |
+          swiftc Sources/RangeAnxiety/Models.swift Sources/RangeAnxiety/ClaudeUsageCapture.swift Tests/ClaudeUsageSmoke/main.swift -o "$RUNNER_TEMP/claude-usage-smoke"
+          "$RUNNER_TEMP/claude-usage-smoke"
+          swiftc -parse-as-library Sources/RangeAnxiety/Models.swift Sources/RangeAnxiety/ClaudeUsageCapture.swift Sources/RangeAnxiety/ClaudeUsageCaptureController.swift Tests/ClaudeCaptureSettingsSmoke/main.swift -o "$RUNNER_TEMP/claude-settings-smoke"
+          "$RUNNER_TEMP/claude-settings-smoke"
       - name: Build app bundle with icon
         run: ./build.sh
       - name: Check packaged launcher
         run: |
           RANGE_ANXIETY_ACCOUNTS_PATH="$PWD/Tests/Fixtures/accounts.json" build/RangeAnxiety.app/Contents/Resources/ra list | grep -F $'codex\tactive\tTest Work'
+          build/RangeAnxiety.app/Contents/Resources/ra claude-statusline --out "$RUNNER_TEMP/claude-usage.json" < Tests/Fixtures/claude-statusline.json
+          grep -F '"used_percentage" : 27.5' "$RUNNER_TEMP/claude-usage.json"
+          test "$(stat -f '%Lp' "$RUNNER_TEMP/claude-usage.json")" = 600
           codesign --verify --deep --strict build/RangeAnxiety.app
           plutil -lint build/RangeAnxiety.app/Contents/Info.plist

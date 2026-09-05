@@ -3,7 +3,7 @@ import SwiftUI
 
 @MainActor
 final class UsageModel: ObservableObject {
-    @Published private(set) var windows: [QuotaWindow] = []
+    @Published private(set) var quotaWindowsByProvider: [ProviderID: [QuotaWindow]] = [:]
     @Published private(set) var quotaBurnRates: [String: Double] = [:]
     @Published private(set) var usages: [ProviderID: ProviderUsage] = [:]
     @Published private(set) var connectedProviderIDs: Set<ProviderID> = [.codex]
@@ -42,8 +42,8 @@ final class UsageModel: ObservableObject {
     private var refreshTimer: Timer?
     private var refreshID = UUID()
     private var pendingResponses = 0
-    private var lastQuotaSampleDate: Date?
-    private var lastQuotaUsedPercent: [String: Double] = [:]
+    private var lastQuotaSampleDates: [ProviderID: Date] = [:]
+    private var lastQuotaUsedPercent: [ProviderID: [String: Double]] = [:]
 
     init(defaults: UserDefaults = .standard) {
         Self.migrateLegacyDefaultsIfNeeded(into: defaults)
@@ -84,7 +84,7 @@ final class UsageModel: ObservableObject {
     var menuBarText: String {
         switch menuBarMetric {
         case .quotaRemaining:
-            guard let primary = windows.first else { return isRefreshing ? "…" : "!" }
+            guard let primary = windows(for: .codex).first else { return isRefreshing ? "…" : "!" }
             return "\(Int(primary.remainingPercent.rounded()))%"
         case .tokensToday:
             guard let tokens = reportedTokensToday else { return isRefreshing ? "…" : "—" }
@@ -120,6 +120,7 @@ final class UsageModel: ObservableObject {
     }
 
     func usage(for provider: ProviderID) -> ProviderUsage { usages[provider] ?? .waiting(provider) }
+    func windows(for provider: ProviderID) -> [QuotaWindow] { quotaWindowsByProvider[provider] ?? [] }
     func quotaActivity(for windowID: String) -> QuotaActivity {
         QuotaActivity(pointsPerMinute: quotaBurnRates[windowID] ?? 0)
     }
@@ -224,9 +225,9 @@ final class UsageModel: ObservableObject {
         switch result {
         case .success(let value):
             usages[provider] = value.usage
-            if provider == .codex {
-                updateQuotaBurnRates(with: value.quotaWindows, sampledAt: Date())
-                windows = value.quotaWindows
+            if provider.isSubscriptionQuotaProvider {
+                updateQuotaBurnRates(for: provider, with: value.quotaWindows, sampledAt: Date())
+                quotaWindowsByProvider[provider] = value.quotaWindows
             }
         case .failure(let error):
             let isUnconfigured: Bool
@@ -241,7 +242,7 @@ final class UsageModel: ObservableObject {
     }
 
     private func reloadConnectionStatus() {
-        connectedProviderIDs = [.codex]
+        connectedProviderIDs = [.codex, .claudeCode]
         for descriptor in ProviderCatalog.providers where descriptor.requiresCredential {
             do {
                 if try ProviderCredentialStore.read(descriptor.id) != nil { connectedProviderIDs.insert(descriptor.id) }
@@ -266,23 +267,24 @@ final class UsageModel: ObservableObject {
         return false
     }
 
-    private func updateQuotaBurnRates(with newWindows: [QuotaWindow], sampledAt date: Date) {
-        guard let previousDate = lastQuotaSampleDate else {
-            lastQuotaSampleDate = date
-            lastQuotaUsedPercent = Dictionary(uniqueKeysWithValues: newWindows.map { ($0.id, $0.usedPercent) })
+    private func updateQuotaBurnRates(for provider: ProviderID, with newWindows: [QuotaWindow], sampledAt date: Date) {
+        guard let previousDate = lastQuotaSampleDates[provider] else {
+            lastQuotaSampleDates[provider] = date
+            lastQuotaUsedPercent[provider] = Dictionary(uniqueKeysWithValues: newWindows.map { ($0.id, $0.usedPercent) })
             return
         }
         let elapsedSeconds = date.timeIntervalSince(previousDate)
         guard elapsedSeconds >= 30 else { return }
         let elapsedMinutes = elapsedSeconds / 60
         var newRates: [String: Double] = [:]
+        let previousValues = lastQuotaUsedPercent[provider] ?? [:]
         for window in newWindows {
-            guard let previous = lastQuotaUsedPercent[window.id] else { continue }
+            guard let previous = previousValues[window.id] else { continue }
             newRates[window.id] = max(0, window.usedPercent - previous) / elapsedMinutes
         }
-        quotaBurnRates = newRates
-        lastQuotaSampleDate = date
-        lastQuotaUsedPercent = Dictionary(uniqueKeysWithValues: newWindows.map { ($0.id, $0.usedPercent) })
+        for (id, rate) in newRates { quotaBurnRates[id] = rate }
+        lastQuotaSampleDates[provider] = date
+        lastQuotaUsedPercent[provider] = Dictionary(uniqueKeysWithValues: newWindows.map { ($0.id, $0.usedPercent) })
     }
 
     private func persistIncludedProviders() {

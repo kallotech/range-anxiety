@@ -6,6 +6,8 @@ Versions before `0.6.0` are documented retrospectively. Exact source snapshots w
 
 ## [Unreleased]
 
+- Added opt-in Claude Code 5-hour and 7-day subscription-limit capture using Claude's documented status-line data, without reading OAuth credentials or making extra usage API calls.
+- Added separate Claude quota bars and preserved/restored existing custom Claude status-line commands when capture is toggled.
 - Added isolated named Codex profiles, provider-owned browser sign-in, per-account quota windows, and manual activation for new `ra codex` sessions.
 - Added the bundled `ra` CLI launcher without shadowing or rewriting the user's normal Codex and Claude profiles.
 - Added Codex and Claude CLI version, installation-source, authentication-health, and update-guidance cards.

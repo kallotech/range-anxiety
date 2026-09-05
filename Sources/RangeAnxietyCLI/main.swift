@@ -14,10 +14,63 @@ func fail(_ message: String, code: Int32 = 1) -> Never {
     exit(code)
 }
 
+func option(_ name: String, in arguments: [String]) -> String? {
+    guard let index = arguments.firstIndex(of: name), arguments.indices.contains(index + 1) else { return nil }
+    return arguments[index + 1]
+}
+
+func runClaudeStatusline(arguments: [String]) -> Never {
+    let input = FileHandle.standardInput.readDataToEndOfFile()
+    if let outputPath = option("--out", in: arguments),
+       let root = try? JSONSerialization.jsonObject(with: input) as? [String: Any],
+       let limits = root["rate_limits"] as? [String: Any] {
+        var capture: [String: Any] = ["observedAt": ISO8601DateFormatter().string(from: Date())]
+        for key in ["five_hour", "seven_day"] {
+            guard let window = limits[key] as? [String: Any],
+                  let used = window["used_percentage"] as? NSNumber else { continue }
+            var clean: [String: Any] = ["used_percentage": min(100, max(0, used.doubleValue))]
+            if let reset = window["resets_at"] as? NSNumber { clean["resets_at"] = reset }
+            else if let reset = window["resets_at"] as? String { clean["resets_at"] = reset }
+            capture[key] = clean
+        }
+        if capture["five_hour"] != nil || capture["seven_day"] != nil,
+           let data = try? JSONSerialization.data(withJSONObject: capture, options: [.prettyPrinted, .sortedKeys]) {
+            let url = URL(fileURLWithPath: outputPath)
+            let manager = FileManager.default
+            try? manager.createDirectory(
+                at: url.deletingLastPathComponent(),
+                withIntermediateDirectories: true,
+                attributes: [.posixPermissions: 0o700]
+            )
+            if (try? data.write(to: url, options: .atomic)) != nil {
+                try? manager.setAttributes([.posixPermissions: 0o600], ofItemAtPath: url.path)
+            }
+        }
+    }
+
+    if let encoded = option("--chain-base64", in: arguments),
+       let data = Data(base64Encoded: encoded),
+       let command = String(data: data, encoding: .utf8), !command.isEmpty {
+        let process = Process(), pipe = Pipe()
+        process.executableURL = URL(fileURLWithPath: "/bin/zsh")
+        process.arguments = ["-lc", command]
+        process.standardInput = pipe
+        process.standardOutput = FileHandle.standardOutput
+        process.standardError = FileHandle.standardError
+        if (try? process.run()) != nil {
+            try? pipe.fileHandleForWriting.write(contentsOf: input)
+            try? pipe.fileHandleForWriting.close()
+            process.waitUntilExit()
+        }
+    }
+    exit(0)
+}
+
 let arguments = Array(CommandLine.arguments.dropFirst())
 guard let command = arguments.first else {
     fail("use 'ra list', 'ra codex', or 'ra claude'")
 }
+if command == "claude-statusline" { runClaudeStatusline(arguments: Array(arguments.dropFirst())) }
 let home = FileManager.default.homeDirectoryForCurrentUser
 let accountsURL = ProcessInfo.processInfo.environment["RANGE_ANXIETY_ACCOUNTS_PATH"].map(URL.init(fileURLWithPath:))
     ?? home.appendingPathComponent("Library/Application Support/RangeAnxiety/accounts.json")

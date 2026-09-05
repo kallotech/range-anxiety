@@ -35,6 +35,18 @@ enum ProviderCatalog {
             availability: .supported
         ),
         ProviderDescriptor(
+            id: .claudeCode,
+            name: "Claude Code",
+            systemImage: "sparkles",
+            detail: "Shows the 5-hour and 7-day subscription limits Claude Code provides to its status line. RangeAnxiety captures only percentages and reset times, never OAuth credentials.",
+            credentialLabel: nil,
+            auxiliaryLabel: nil,
+            auxiliaryRequired: false,
+            helpTitle: "Claude status-line documentation",
+            helpURL: URL(string: "https://code.claude.com/docs/en/statusline"),
+            availability: .supported
+        ),
+        ProviderDescriptor(
             id: .openRouter,
             name: "OpenRouter",
             systemImage: "arrow.triangle.branch",

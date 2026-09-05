@@ -34,6 +34,7 @@ enum QuotaActivity: Equatable {
 
 enum ProviderID: String, CaseIterable, Codable, Identifiable {
     case codex
+    case claudeCode
     case openRouter
     case openAI
     case anthropic
@@ -47,6 +48,10 @@ enum ProviderID: String, CaseIterable, Codable, Identifiable {
     case azureOpenAI
 
     var id: String { rawValue }
+
+    var isSubscriptionQuotaProvider: Bool {
+        self == .codex || self == .claudeCode
+    }
 }
 
 enum MenuBarMetric: String, CaseIterable, Identifiable {
